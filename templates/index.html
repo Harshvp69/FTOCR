@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OCR & Search</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: #f4f4f4;
+        }
+        .container {
+            max-width: 700px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+        }
+        .preview-image {
+            max-width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 10px;
+            border-left: 5px solid #007bff;
+            margin-top: 10px;
+        }
+        .search-results img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="text-center">📄 OCR & 🔎 Search</h2>
+
+    <!-- File Upload Form -->
+    <form id="upload-form" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label class="form-label">Upload Image for OCR:</label>
+            <input type="file" class="form-control" id="image" name="image" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Extract Text</button>
+    </form>
+
+    <img id="preview-image" class="preview-image" alt="Uploaded Image Preview">
+    
+    <div id="extracted-text" class="result" style="display: none;"></div>
+
+    <hr>
+
+    <!-- Search Form -->
+    <form id="search-form">
+        <div class="mb-3">
+            <label class="form-label">Search for Text:</label>
+            <input type="text" class="form-control" id="search-query" name="query" required>
+        </div>
+        <button type="submit" class="btn btn-success w-100">Search</button>
+    </form>
+
+    <div id="search-results" class="mt-4"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    // Handle File Upload
+    $("#upload-form").submit(function (e) {
+        e.preventDefault();
+        let formData = new FormData(this);
+
+        $.ajax({
+            url: "/",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                if (response.error) {
+                    alert(response.error);
+                } else {
+                    $("#preview-image").attr("src", response.image_path).show();
+                    $("#extracted-text").html("<strong>📝 Extracted Text:</strong><br>" + response.extracted_text).show();
+                }
+            },
+            error: function () {
+                alert("❌ Error processing image. Please try again.");
+            }
+        });
+    });
+
+    // Handle Search
+    $("#search-form").submit(function (e) {
+        e.preventDefault();
+        let query = $("#search-query").val();
+
+        $.post("/search", { query: query }, function (response) {
+            $("#search-results").empty();
+            
+            if (response.search_results && response.search_results.length > 0) {
+                response.search_results.forEach(function (result) {
+                    $("#search-results").append(`<div class='search-results'><img src="${result.image_path}" alt="Found Image"></div>`);
+                });
+            } else {
+                $("#search-results").html("<p class='text-danger'>❌ No matching images found.</p>");
+            }
+        }).fail(function () {
+            alert("❌ Error fetching search results. Please try again.");
+        });
+    });
+});
+</script>
+
+</body>
+</html>
