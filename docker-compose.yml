@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    networks:
+      - ftocr-network
+
+  app:
+    build: .
+    container_name: ftocr-app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - elasticsearch
+    networks:
+      - ftocr-network
+    volumes:
+      - ./static/uploads:/app/static/uploads
+
+networks:
+  ftocr-network:
+    driver: bridge
